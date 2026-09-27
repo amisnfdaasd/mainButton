@@ -1,0 +1,56 @@
+local RS = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local collectionService = game:GetService("CollectionService")
+local player = Players.LocalPlayer
+local playerGui = player.PlayerGui
+local buttonsFrame = playerGui.DefaultGui.ButtonsGui
+
+local constants = require(RS.Player.Constants)
+local soundPlayer = require(RS.Player.Utility.soundPlayer)
+
+local openButtonClicked = RS.BindableEvents.Client.mainButtonClicked
+
+local module = {}
+
+module.bindableEvent = openButtonClicked
+
+local UI_BUTTONS = {
+	[Enum.KeyCode.R] = "RecipeBook",
+	[Enum.KeyCode.Q] = "Quests",
+	[Enum.KeyCode.T] = "Orders",
+	[Enum.KeyCode.B] = "Bestiary",
+	[Enum.KeyCode.F] = "Items",
+}
+
+function module.buttonClicked(buttonType)
+	soundPlayer.PlayDirect(script.Sounds.openUI)
+	openButtonClicked:Fire(buttonType)
+	print(buttonType)
+end
+
+UIS.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+
+	local uiName = UI_BUTTONS[input.KeyCode]
+	if uiName then
+		module.buttonClicked(uiName)
+	end
+end)
+
+for _, child in collectionService:GetTagged("Button") do
+	if child:IsA("GuiButton") then
+		local buttonType = child:GetAttribute("buttonType") or nil
+		if not buttonType then
+			warn("no buttonType attribute for ", child)
+		end
+
+		child.Activated:Connect(function()
+			module.buttonClicked(buttonType)
+		end)
+
+		print("connected")
+	end
+end
+
+return module
